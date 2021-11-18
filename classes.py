@@ -5,11 +5,54 @@ class Transicao:
         self.prox_estado = prox_estado  #proximo estado ao ler o simbolo
 class Estado:
     def __init__(self,estado):
-        self.estado = estado    #estado atual
+        self.nome = estado    #estado atual
         self.transicoes = []    #lista de transicoes, cada transicao tem formato (letra,prox_estado)
 class Automato:
     def __init__(self,nome,Q,q0,F):
         self.nome = nome    #nome do automato
-        self.estados = Q    #Q é uma lista de instancias da classe Estado, contem todos estados
-        self.estado_inicial = q0    #q0 é uma instancia da classe Estado,então ja tem as transicoes incluso
-        self.estados_finais = F     #F é uma lista de instancias da classe Estado, então ja tem as transicoes de cada estado
+        self.estados = Q    #Q é uma lista de instancias da classe Estado (que contem transicao de cada estado), contem todos estados
+        self.estado_inicial = q0    #q0 é o nome do estado inicial apenas, sem as transicoes
+        self.estados_finais = F     #F é o nome dos estados finais apenas, sem as transicoes
+
+    def aceita(self,palavra):
+        estado_inicial = self.estado_inicial
+        caminho = []
+        n_estados = len(self.estados)
+        estado_atual = self.__busca_estado(estado_inicial)
+        caminho.append(estado_atual.nome)
+        for letra in palavra:
+            flag = 0    #nao achou transicao
+            transicoes = estado_atual.transicoes
+            for transicao in transicoes:    #procura em cada transicao se há uma transicao com essa letra
+                if letra == transicao.simbolo:  #se acha uma transicao com essa letra adiciona ao caminho
+                    caminho.append(transicao.simbolo)
+                    estado_atual = self.__busca_estado(transicao.prox_estado)
+                    caminho.append(estado_atual.nome)
+                    flag = 1    #achou transicao
+                    break
+            if flag == 0:   #se não achou transicao fazer caminho ser vazio
+                caminho = []
+                break
+        self.__imprime_resultado(caminho)
+
+    def __imprime_resultado(self,caminho):
+        tamanho = len(caminho)
+        if tamanho == 0:  #se o caminho está vazio
+            print('Palavra rejeitada')
+        else:
+            for estado_final in self.estados_finais:    #checa se o ultimo estado é final
+                if estado_final == caminho[tamanho-1]:
+                    for i in range(tamanho):
+                        if i%2 == 0:                #se for estado
+                            print(f"({caminho[i]})", end="")
+                        else:                       #se for simbolo
+                            print (f"--{caminho[i]}-->",end= "")
+                    print("\nPalavra aceitada")
+                    return
+            print('Palavra rejeitada')
+
+    def __busca_estado(self,nome_estado):   #retorna o estado a ser buscado
+        for estado in self.estados:     #pega o estado com nome nome_estado
+            if estado.nome == nome_estado:
+                return estado
+        return None
