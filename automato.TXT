@@ -32,8 +32,8 @@ q3
 2:q3
 5:q3
 c:FileiraC
-1:q3
 q7
+1:q3
 FileiraA
 L:A1
 R:A2
