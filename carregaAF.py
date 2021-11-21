@@ -85,7 +85,6 @@ def filtra_estados_com_transicoes_diferentes(transicoes, conjunto_de_estados):
         if not estado.prox_estado in tupla_transicoes_prox_estado:
             filtrado.append(estado)
     return filtrado
-    #return list(filter(lambda state: not state.prox_estado in tuple(map(lambda x: x.prox_estado, transicoes)), conjunto_de_estados))
 
 # mapeia uma lista de instancias de Transições para uma tupla de estados
 def mapeia_estados_transicoes_prox_estado(estado_transicoes):
@@ -116,15 +115,8 @@ def salvaAFD(filename, afd, automato):
     file.write(automato.nome + "=" + "(" + automato.estado_inicial + ",{" + str(estados_finais_string) + "})\n")
     
     for estado_nome, estado in afd.items():
-#        print('Estado Nome: ',estado_nome)
         file.write(tuplaParaString(estado_nome))
         file.write("\n")
         for key, value in estado.items():
-#            print('Entrada: ', key)
-#            print('Transicao: ', end="\t")
             file.write(key + ":" + tuplaParaString(map(lambda x: x.prox_estado, value)) + "\n")
-#            for trans in value:
-#                print(trans.prox_estado, end=" ")
-#            print("\n")
-#        print("===============================================")
     file.close()
