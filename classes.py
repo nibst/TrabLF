@@ -3,10 +3,23 @@ class Transicao:
     def __init__(self,simbolo,prox_estado):
         self.simbolo = simbolo
         self.prox_estado = prox_estado  #proximo estado ao ler o simbolo
+    def __lt__(self, other):
+        if len(self.prox_estado) == len(other.prox_estado):
+            return self.prox_estado < other.prox_estado
+        return len(self.prox_estado) < len(other.prox_estado)
+
 class Estado:
     def __init__(self,estado):
         self.nome = estado    #estado atual
         self.transicoes = []    #lista de transicoes, cada transicao tem formato (letra,prox_estado)
+    def juntaProximosEstadosComTransicoesIguais(self):
+        dicionario = {}
+        for transicao in self.transicoes:
+            if not transicao.simbolo in dicionario:
+                dicionario[transicao.simbolo] = []
+            dicionario[transicao.simbolo].append(transicao)
+        return dicionario
+    
 class Automato:
     def __init__(self,nome,Q,q0,F):
         self.nome = nome    #nome do automato
@@ -56,3 +69,14 @@ class Automato:
             if estado.nome == nome_estado:
                 return estado
         return None
+
+    def busca_estado(self, nome_estado):
+        return self.__busca_estado(nome_estado)
+
+    def lista_simbolos(self):
+        simbolos = []
+        for estado in self.estados:
+            for transicao in estado.transicoes:
+                if transicao.simbolo not in simbolos:
+                    simbolos.append(transicao.simbolo)
+        return simbolos
