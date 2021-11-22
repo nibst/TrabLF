@@ -90,7 +90,7 @@ def filtra_estados_nao_inseridos_contidos_na_tabela_de_transicao(T, Q, lista_est
             filtrado.append(transicao_limpa)
     return filtrado
 
-def AFNparaAFD2(automato):
+def AFNparaAFD(automato):
     # passo 1:
     Q = []
     Q_text = []
@@ -124,15 +124,19 @@ def AFNparaAFD2(automato):
                 F.append(estadoTuplado)
     return Automato(automato.nome, Q, estado_inicial, F)
 
-def salvaAFD(filename, afd, automato):
-    estados_finais_string = estados_para_string(afd.keys(), automato.estados_finais)
+def tuplaParaString(tupla):
+    return functools.reduce(lambda acc, valor: acc + str(valor), tuple(tupla), "")
+
+def salvaAFD(filename, automato):
 
     file = open(filename, mode="w")
-    file.write(automato.nome + "=" + "(" + automato.estado_inicial + ",{" + str(estados_finais_string) + "})\n")
-    
-    for estado_nome, estado in afd.items():
-        file.write(tuplaParaString(estado_nome))
+    estados_finais_string = ','.join(list(map(lambda estado_final: str(tuplaParaString(estado_final.nome)), automato.estados_finais)))
+    file.write(automato.nome + "=" + "(" + tuplaParaString(automato.estado_inicial) + ",{" + str(estados_finais_string) + "})\n")
+
+    for estado in automato.estados:
+        file.write(tuplaParaString(estado.nome))
         file.write("\n")
-        for key, value in estado.items():
-            file.write(key + ":" + tuplaParaString(map(lambda x: x.prox_estado, value)) + "\n")
+        for transicao in estado.transicoes:
+            file.write(transicao.simbolo + ":" + tuplaParaString(transicao.prox_estado))
+            file.write("\n")
     file.close()
