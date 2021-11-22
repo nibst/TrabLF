@@ -39,74 +39,90 @@ def carregaTransicoes(file,automato):
         if (not linha) or (linha.find(':') == -1):   #se a próxima linha for um estado ou acabar o arquivo então colocar estado atual no automato
             automato.estados.append(estado_atual)
 
-
-def AFNparaAFD(automato:Automato):
-    # passo 1: Cria uma tabela de transição para AFD
-    tabela_de_transicao = {}
+def geraLinha(automato, tuplaDeEstados):
     simbolos = automato.lista_simbolos()
-    estado_inicial = automato.estado_inicial
+    linha = []
+    for estado in tuplaDeEstados:
+        estadoBuscado = automato.busca_estado(estado)
+        for simbolo in simbolos:
+            k = estadoTransicoesPorSimbolo(estadoBuscado, simbolo)
+            if k == None:
+                k = []
+            linha = linha + k
+    junta_transicoes = gera_novas_transicoes(linha)
+    return junta_transicoes
+
+def estadoTransicoesPorSimbolo(estado, simbolo):
+    transicoes = []
+    if estado == None:
+        return None
+    for transicao in estado.transicoes:
+        if transicao.simbolo == simbolo:
+            transicoes.append(transicao)
+    return transicoes
+
+def gera_novas_transicoes(transicoes):
+    novas_transicoes = {}
+    for transicao in transicoes:
+        if not transicao.simbolo in novas_transicoes:
+            novas_transicoes[transicao.simbolo] = tuple()
+        if not transicao.prox_estado in novas_transicoes[transicao.simbolo]:
+            novas_transicoes[transicao.simbolo] = novas_transicoes[transicao.simbolo] + (transicao.prox_estado,)
+    outras_novas = []
+    for transicao in novas_transicoes.items():
+        outras_novas.append(Transicao(transicao[0], tuple(sorted(set(transicao[1])))))
+                
+    return outras_novas
+
+def junta_transicoes_por_estado(estado_transicoes):
+    transicoes = {}
+    for transicao in estado_transicoes:
+        if not transicao.simbolo in transicoes:
+            transicoes[transicao.simbolo] = tuple()
+        transicoes[transicao.simbolo] = tuple(sorted(set(transicoes[transicao.simbolo] + transicao.prox_estado)))
+    return transicoes.values()
+def filtra_estados_nao_inseridos_contidos_na_tabela_de_transicao(T, Q, lista_estados_nao_inseridos):
+    filtrado = []
+    junta_transicoes = junta_transicoes_por_estado(T.transicoes)
+    for transicao in junta_transicoes:
+        transicao_limpa = tuple(sorted(set(transicao)))
+        if not transicao_limpa in Q and not transicao_limpa in lista_estados_nao_inseridos and not transicao_limpa in filtrado:
+            filtrado.append(transicao_limpa)
+    return filtrado
+
+def AFNparaAFD2(automato):
+    # passo 1:
+    Q = []
+    Q_text = []
+    T = []
+    F = []
+    estados_nao_inseridos = []
+    estado_inicial = (automato.estado_inicial,)
 
     # passo 2: adiciona o estado inicial na tabela de transição
     q0 = Estado(estado_inicial)
-    q0.transicoes = automato.busca_estado(estado_inicial).juntaProximosEstadosComTransicoesIguais()
-    conjunto_de_estados = tuple([q0.nome])
-    tabela_de_transicao[conjunto_de_estados] = q0.transicoes
+    q0.transicoes = geraLinha(automato, estado_inicial)
+    Q.append(q0)
+    Q_text.append(estado_inicial)
+    T = q0.transicoes
+
+    estados_nao_inseridos = filtra_estados_nao_inseridos_contidos_na_tabela_de_transicao(q0, Q_text, [])
 
     # repete os passos 3-4 até que não haja mais transições
-    for estado in automato.estados:
-        if estado.nome == estado_inicial:
-            continue
+    while len(estados_nao_inseridos) > 0:
+        novo_estado = tuple(sorted(set(estados_nao_inseridos[0])))
+        qn = Estado(novo_estado)
+        qn.transicoes = geraLinha(automato, novo_estado)
+        Q.append(qn)
+        Q_text.append(novo_estado)
+        T = T + qn.transicoes
+        estados_nao_inseridos = estados_nao_inseridos[1:] + filtra_estados_nao_inseridos_contidos_na_tabela_de_transicao(qn, Q_text, estados_nao_inseridos)
 
-        # passo 3: adiciona o estado atual na tabela de transição
-        qn = Estado(estado.nome)
-        qn.transicoes = estado.juntaProximosEstadosComTransicoesIguais()
-        # busca na tabela de transição o conjunto formado contendo o estado atual
-        conjunto_de_estados = buscaNaTabelaDeTransicao(tabela_de_transicao, qn.nome)
-        conjunto_de_estados_sem_estado_atual = tuple(filter(lambda x: x != qn.nome, conjunto_de_estados)) # retira o estado atual pois ele ja foi inserido na tabela de transição anteriormente (passo 3)
-        for linha in tabela_de_transicao:
-            # ordena o conjunto da linha e do conjunto de estados sem o estado atual
-            # pois [a,b] != [b,a]
-            if sorted(linha) == sorted(conjunto_de_estados_sem_estado_atual):
-                for simbolo in simbolos: # para cada simbolo da lista de simbolos do Automato
-                    conjunto_de_estados_do_simbolo = tabela_de_transicao[linha].get(simbolo, None)
-                    if conjunto_de_estados_do_simbolo is not None:
-                        if not qn.transicoes.get(simbolo):
-                            qn.transicoes[simbolo] = []
-                        novas_transicoes = filtra_estados_com_transicoes_diferentes(qn.transicoes[simbolo], conjunto_de_estados_do_simbolo)
-                        qn.transicoes[simbolo] = sorted(qn.transicoes[simbolo] + novas_transicoes) # expande um conjunto de estados com transições diferentes
-                break # dá break no for, pois já encontrou o conjunto de estados que é igual o conjunto de estados sem o estado atual
-        tabela_de_transicao[conjunto_de_estados] = qn.transicoes
-    return tabela_de_transicao
-
-def filtra_estados_com_transicoes_diferentes(transicoes, conjunto_de_estados):
-    filtrado = []
-    tupla_transicoes_prox_estado = tuple(map(lambda x: x.prox_estado, transicoes))
-    for estado in conjunto_de_estados:
-        if not estado.prox_estado in tupla_transicoes_prox_estado:
-            filtrado.append(estado)
-    return filtrado
-
-# mapeia uma lista de instancias de Transições para uma tupla de estados
-def mapeia_estados_transicoes_prox_estado(estado_transicoes):
-    return tuple(map(lambda estado_transicao: list(map(lambda transicao: transicao.prox_estado, estado_transicao)), estado_transicoes))
-
-def buscaNaTabelaDeTransicao(tabela_de_transicao, estado_buscado):
-    for estado_transicoes in tabela_de_transicao.values():
-        estados_transicoes_prox_estado = mapeia_estados_transicoes_prox_estado(estado_transicoes.values())
-        for conjunto_de_estados in estados_transicoes_prox_estado:
-            if estado_buscado in conjunto_de_estados:
-                return tuple(conjunto_de_estados)
-    return None
-
-def tuplaParaString(tupla):
-    return functools.reduce(lambda acc, valor: acc + str(valor), tuple(tupla), "")
-
-# recebe um array de chaves e retorna uma string com os estados separados por virgula
-def estados_para_string(array_de_chaves, estados_finais):
-    estados = list( map(tuplaParaString, 
-                    list(   filter(lambda key: tuple(filter(lambda estados: estados in key, estados_finais)), 
-                            array_de_chaves))))
-    return ', '.join(estados)
+    for estadoTuplado in Q:
+        for estado in estadoTuplado.nome:
+            if estado in automato.estados_finais:
+                F.append(estadoTuplado)
+    return Automato(automato.nome, Q, estado_inicial, F)
 
 def salvaAFD(filename, afd, automato):
     estados_finais_string = estados_para_string(afd.keys(), automato.estados_finais)

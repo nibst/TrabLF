@@ -7,8 +7,14 @@ def test_1():
     F = []
     automato = Automato(None,Q,None,F)
     carregaAF("testAFN.TXT", automato)   
-    AFD = AFNparaAFD(automato)
-    salvaAFD("testAFN-AFD.TXT", AFD, automato)
+    AFD = AFNparaAFD2(automato)
+    for estado in AFD.estados:
+        print('estado: ', estado.nome)
+        for transicao in estado.transicoes:
+            print('transicao: ', transicao.simbolo, transicao.prox_estado)
+    for estados_finais in AFD.estados_finais:
+        print('estado final: ', estados_finais.nome)
+    #salvaAFD("testAFN-AFD.TXT", AFD, automato)
 
 # test_2: testa lendo um arquivo com um automato AFD
 def test2():
@@ -20,4 +26,4 @@ def test2():
 
 if __name__ == "__main__":
     test_1()
-    test2()
+    #test2()
