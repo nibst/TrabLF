@@ -51,42 +51,49 @@ def geraLinha(automato, tuplaDeEstados):
     junta_transicoes = gera_novas_transicoes(linha) # junta as transições com simbolos iguais
     return junta_transicoes
 
-def estadoTransicoesPorSimbolo(estado, simbolo):
+def estadoTransicoesPorSimbolo(estado, simbolo): 
     transicoes = []
+    # monta um array de transições para o simbolo passado
     for transicao in estado.transicoes:
         if transicao.simbolo == simbolo:
             transicoes.append(transicao)
     return transicoes
 
-# gera as novas transições para o AFD
+# recebe um array de transições, junta os de simbolos iguais e retorna um array de Transição contendo tuplas no seu proximo estado
 def gera_novas_transicoes(transicoes):
     novas_transicoes = {}
+    # gera um dicionario no formato {simbolo: (estado1, estado2)}
     for transicao in transicoes:
-        if not transicao.simbolo in novas_transicoes:
-            novas_transicoes[transicao.simbolo] = tuple()
-        if not transicao.prox_estado in novas_transicoes[transicao.simbolo]:
+        if not transicao.simbolo in novas_transicoes: # se o simbolo não estiver contido no dicionario de novas transições
+            novas_transicoes[transicao.simbolo] = tuple() # insere o simbolo como chave e uma tupla vazia como valor
+        if not transicao.prox_estado in novas_transicoes[transicao.simbolo]: # só insere se o proximo estado não estiver contido no dicionario de novas transições
             novas_transicoes[transicao.simbolo] = novas_transicoes[transicao.simbolo] + (transicao.prox_estado,)
     outras_novas = []
+    # gera um array de Transicao contendo todas as transições
     for transicao in novas_transicoes.items():
         outras_novas.append(Transicao(transicao[0], tuple(sorted(set(transicao[1])))))
-                
+    # retorna array de Transicaos
     return outras_novas
 
 def junta_transicoes_por_estado(estado_transicoes):
     transicoes = {}
+    # gera um dicionario no formato {simbolo: (estado1, estado2)}
     for transicao in estado_transicoes:
         if not transicao.simbolo in transicoes:
             transicoes[transicao.simbolo] = tuple()
         transicoes[transicao.simbolo] = tuple(sorted(set(transicoes[transicao.simbolo] + transicao.prox_estado)))
+    # retorna um array dos valores do dicionario
     return transicoes.values()
 
+# filtra estados não inseridos no AFD com base na tabela de transições gerada
 def filtra_estados_nao_inseridos_contidos_na_tabela_de_transicao(T, Q, lista_estados_nao_inseridos):
     filtrado = []
-    junta_transicoes = junta_transicoes_por_estado(T.transicoes)
-    for transicao in junta_transicoes:
-        transicao_limpa = tuple(sorted(set(transicao)))
-        if not transicao_limpa in Q and not transicao_limpa in lista_estados_nao_inseridos and not transicao_limpa in filtrado:
-            filtrado.append(transicao_limpa)
+    junta_transicoes = junta_transicoes_por_estado(T.transicoes) # junta as transições por estado
+    for transicao in junta_transicoes: # para cada transição
+        transicao_limpa = tuple(sorted(set(transicao))) # remove os estados repetidos
+        # se não estiver no conjunto Q, nem na "lista de estados nao inseridos" e nem no conjunto filtrado
+        if not transicao_limpa in Q and not transicao_limpa in lista_estados_nao_inseridos and not transicao_limpa in filtrado: 
+            filtrado.append(transicao_limpa) # adiciona na lista de estados filtrados
     return filtrado
 
 def AFNparaAFD(automato):
@@ -130,9 +137,9 @@ def AFNparaAFD(automato):
 
     # passo 4: Os estados finais serão os estados que possuem estados finais de AFN
     for estadoTuplado in Q: # estadoTuplado é uma tupla de estados
-        for estado in estadoTuplado.nome: 
-            if estado in automato.estados_finais:
-                F.append(estadoTuplado)
+        for estado in estadoTuplado.nome: # como o nome do estado é uma tupla, é usado para percorrer os estados da tupla e verificar se pertencem a um estado final.
+            if estado in automato.estados_finais: # se o estado pertence ao conjunto de estados finais do AFN
+                F.append(estadoTuplado) # adiciona o estado na lista de estados finais do AFD
     return Automato(automato.nome, Q, estado_inicial, F)
 
 def tuplaParaString(tupla): # recebe uma tupla de estados e retorna uma string (q1, q2) -> q1q2
