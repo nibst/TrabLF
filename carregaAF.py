@@ -58,6 +58,7 @@ def estadoTransicoesPorSimbolo(estado, simbolo):
             transicoes.append(transicao)
     return transicoes
 
+# gera as novas transições para o AFD
 def gera_novas_transicoes(transicoes):
     novas_transicoes = {}
     for transicao in transicoes:
