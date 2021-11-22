@@ -39,14 +39,16 @@ def carregaTransicoes(file,automato):
         if (not linha) or (linha.find(':') == -1):   #se a próxima linha for um estado ou acabar o arquivo então colocar estado atual no automato
             automato.estados.append(estado_atual)
 
+# geraLinha gera a linha da tabela de transições do estado atual
+# contendo todas as transições do estado tuplado
 def geraLinha(automato, tuplaDeEstados):
-    simbolos = automato.lista_simbolos()
+    simbolos = automato.lista_simbolos() # pega os simbolos do automato
     linha = []
-    for estado in tuplaDeEstados:
+    for estado in tuplaDeEstados: # para cada estado da tupla
         estadoBuscado = automato.busca_estado(estado)
-        for simbolo in simbolos:
-            linha = linha + estadoTransicoesPorSimbolo(estadoBuscado, simbolo)
-    junta_transicoes = gera_novas_transicoes(linha)
+        for simbolo in simbolos: # para cada simbolo do automato
+            linha = linha + estadoTransicoesPorSimbolo(estadoBuscado, simbolo) # concatena as transições
+    junta_transicoes = gera_novas_transicoes(linha) # junta as transições com simbolos iguais
     return junta_transicoes
 
 def estadoTransicoesPorSimbolo(estado, simbolo):
@@ -76,7 +78,7 @@ def junta_transicoes_por_estado(estado_transicoes):
             transicoes[transicao.simbolo] = tuple()
         transicoes[transicao.simbolo] = tuple(sorted(set(transicoes[transicao.simbolo] + transicao.prox_estado)))
     return transicoes.values()
-    
+
 def filtra_estados_nao_inseridos_contidos_na_tabela_de_transicao(T, Q, lista_estados_nao_inseridos):
     filtrado = []
     junta_transicoes = junta_transicoes_por_estado(T.transicoes)
